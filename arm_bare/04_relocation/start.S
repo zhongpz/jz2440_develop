@@ -41,31 +41,32 @@ _start:
 			                   
 			/* 4.data段重定位 */			
 			bl      sdram_init
-			ldr     r1, =data_load_addr   @data段运行地址0x30000000
-			ldr     r2, =data_start       @运行当前地址
-			ldr     r3, =data_end         @运行当前地址+（*.data）大小
+			mov     r1, #0                
+			ldr     r2, =_start           @第一条指令运行时地址
+			ldr     r3, =__bss_start      @bss段起始地址
 			
 	  cpy:
-			ldrb    r4, [r1]              @r1的字节数读到r4
-			strb    r4, [r2]              @r1的字节数存入r2
-			add     r1, r1, #1            @r1+4
-			add     r2, r2, #1
+			ldr     r4, [r1]              @0地址数据读到r4
+			str     r4, [r2]              @r1的字节数存入r2
+			add     r1, r1, #4            @r1+4
+			add     r2, r2, #4
 			cmp     r2, r3
-			bne		cpy
+			ble		cpy
 			
 			
 			/* 5.清除bss段*/
-			ldr     r1, =bss_start
-			ldr     r2, =bss_end
+			ldr     r1, =__bss_start
+			ldr     r2, =_end
 			mov     r3, #0
 	 clean:
 			strb    r3, [r1]              @清0
-			add     r1, r1, #1
+			add     r1, r1, #4
 			cmp     r1, r2
 			bne     clean	
 						
 			
-            bl      main                  @ 调用C程序中的main函数
+            //bl      main                  @ 调用C程序中的main函数
+			ldr     pc, =main
 halt_loop:
             b       halt_loop
 

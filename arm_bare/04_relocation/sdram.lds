@@ -13,17 +13,20 @@ SECTIONS{
 
 
 SECTIONS{
-	.text 0 : {*(.text)}
+	. = 0x30000000;
+	
+	. =  ALIGN(4);
+	.text  : {*(.text)}
+	
+	. =  ALIGN(4);
 	.rodata : {*(.rodata)}
-	.data 0x30000000 : AT(0X700) 
-	{
-		data_load_addr = LOADADDR(.data);
-		data_start = .;
-		*(.data)
-		data_end = .;
-	}
-	bss_start = .;
+	
+	. =  ALIGN(4);
+	.data : {*(.date)}
+	
+	. =  ALIGN(4);
+	__bss_start = .;
 	.bss : {*(.bss	) *(.COMMON)}
-	bss_end = .;
+	_end = .;
 	
 	}
