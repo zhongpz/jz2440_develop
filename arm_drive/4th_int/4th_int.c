@@ -42,6 +42,8 @@ static irqreturn_t button_irq(int irq, void *dev_id)
 {
 	struct pin_desc *pindesc = (struct pin_desc *)dev_id;
 	unsigned int pinval;
+
+	//获取中断引脚的电平
 	pinval = s3c2410_gpio_getpin(pindesc->pin);
 
 	if(pinval)
