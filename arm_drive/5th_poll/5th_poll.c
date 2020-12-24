@@ -99,7 +99,7 @@ int fifth_drv_close(struct inode *inode, struct file *file)
 	free_irq(IRQ_EINT11, &pins_desc[2]);
 	free_irq(IRQ_EINT19, &pins_desc[3]);
 }
-
+/*把进程挂进队列*/
 static unsigned fifth_drv_poll(struct file *file, poll_table *wait)
 {
 	unsigned int mask = 0;

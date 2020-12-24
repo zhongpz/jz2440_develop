@@ -13,7 +13,7 @@ int main(int argc, char **argv)
 	unsigned char key_val;
 	int ret;
 
-	struct pollfd fds[1];
+	struct pollfd fds[1];   //文件描述符数组
 
 	
 	fd = open("/dev/poll", O_RDWR);
@@ -27,7 +27,7 @@ int main(int argc, char **argv)
 
 	while (1)
 	{	
-		ret = poll(fds, 1, 5000);
+		ret = poll(fds, 1, 5000);   
 		if(ret == 0)
 		{
 			printf("time out\n");
