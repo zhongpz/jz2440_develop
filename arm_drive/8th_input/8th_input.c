@@ -20,12 +20,12 @@
 #include <asm/io.h>
 #include <asm/arch/regs-gpio.h>
 
-/*Òı½ÅÃèÊö½á¹¹Ìå*/
+/*å¼•è„šæè¿°ç»“æ„ä½“*/
 struct pin_desc{
-		int irq;                //ÖĞ¶ÏºÅ
-		char *name;             //Ãû×Ö
-		unsigned int pin;       //Òı½Å
-		unsigned int key_val;   //°´¼üÖµ
+		int irq;                //ä¸­æ–­å·
+		char *name;             //åå­—
+		unsigned int pin;       //å¼•è„š
+		unsigned int key_val;   //æŒ‰é”®å€¼
 };
 
 struct pin_desc pins_desc[4] = {
@@ -35,20 +35,20 @@ struct pin_desc pins_desc[4] = {
 	{IRQ_EINT19, "S5", S3C2410_GPG11, KEY_LEFTSHIFT},
 };
 
-static struct pin_desc *irq_pd;          //
-static struct timer_list buttons_timer;  //Éè¶¨¶¨Ê±Æ÷
-static struct input_dev *buttons_dev;    //¶¨Òåinput_dev½á¹¹
+static struct pin_desc *irq_pd;          
+static struct timer_list buttons_timer;  //å®šä¹‰å®šæ—¶å™¨
+static struct input_dev *buttons_dev;    //å®šä¹‰input_devç»“æ„ä½“
 
-/*ÖĞ¶Ï´¦Àíº¯Êı*/
+/* ä¸­æ–­å¤„ç†å‡½æ•° */
 static irqreturn_t button_irq(int irq, void *dev_id)
 {
 	irq_pd = (struct pin_desc *)dev_id;
-	/* Éè¶¨¶¨Ê±³¬Ê±Ê±¼äÎª10ms */
+	/* è®¾å®šå®šæ—¶å™¨è¶…æ—¶æ—¶é—´ä¸º10ms */
 	mod_timer(&buttons_timer, jiffies+HZ/100);
 	return IRQ_RETVAL(IRQ_HANDLED);
 }
 
-/*¶¨Ê±Æ÷´¦Àíº¯Êı*/
+/* å®šæ—¶å™¨å¤„ç†å‡½æ•° */
 static void buttons_timer_funtion(unsigned long data)
 {
 	struct pin_desc *pindesc = irq_pd;
@@ -60,83 +60,83 @@ static void buttons_timer_funtion(unsigned long data)
 
 	if(pinval)
 	{
-		/*ËÉ¿ª,ÉÏ±¨ÊÂ¼ş,input_dev½á¹¹,ÊÂ¼şÀàĞÍ£¬¾ßÌåÊÂ¼ş£¬0±íÊ¾ËÉ¿ª	*/
+		/* æ¾å¼€ï¼Œä¸ŠæŠ¥äº‹ä»¶ï¼Œ input_devç»“æ„,äº‹ä»¶ç±»å‹ï¼Œå…·ä½“äº‹ä»¶ï¼Œ0è¡¨ç¤ºæ¾å¼€*/
 		input_event(buttons_dev, EV_KEY, pindesc->key_val, 0);	
-		input_sync(buttons_dev); //ÉÏ±¨Í¬²½ÊÂ¼ş
+		input_sync(buttons_dev); //ä¸ŠæŠ¥åŒæ­¥äº‹ä»¶
 	}
 	else
 	{
-		/*°´ÏÂ*/
+		/*æŒ‰ä¸‹*/
 		input_event(buttons_dev, EV_KEY, pindesc->key_val, 1);	
-		input_sync(buttons_dev); //ÉÏ±¨Í¬²½ÊÂ¼ş
+		input_sync(buttons_dev); //ä¸ŠæŠ¥åŒæ­¥äº‹ä»¶
 	}
 }
 	
 
-/* 1.ÏÈĞ´Èë¿Úº¯Êı */
+/* 1.å…¥å£å‡½æ•° */
 static int buttons_init(void)
 {
-	/* 1.1·ÖÅäÒ»¸öinput_dev½á¹¹Ìå */
-	buttons_dev = input_allocate_device();		 //·ÖÅä
+	/* 1.1åˆ†é…ä¸€ä¸ªinput_devç»“æ„ä½“ï¼Œæ­£å¸¸è¦åˆ¤æ–­æ˜¯å¦æˆåŠŸ */
+	buttons_dev = input_allocate_device();		 
 	
-	/* 1.2ÉèÖÃinput_dev */
-	/* 1.2.1 ÄÜ²úÉúÄÄÀàÊÂ¼ş */
-	set_bit(EV_KEY, buttons_dev->evbit);   //°´¼üÊÂ¼ş
-	set_bit(EV_REP, buttons_dev->evbit);   //ÖØ¸´ÀàÊÂ¼ş
+	/* 1.2è®¾ç½®ç»“æ„ä½“ */
+	/* 1.2.1 èƒ½äº§ç”Ÿå“ªç±»äº‹ä»¶ */
+	set_bit(EV_KEY, buttons_dev->evbit);   //æŒ‰é”®ç±»äº‹ä»¶
+	set_bit(EV_REP, buttons_dev->evbit);   //é‡å¤ç±»äº‹ä»¶
 
-	/* 1.2.2 ÄÜ²úÉú°´¼üÀàÊÂ¼şÖĞµÄÄÄÖÖÊÂ¼ş£¬ÓÃËÄ¸ö°´¼üÀ´²úÉúL,S,ENTER,LEFTSHIFT */
+	/* 1.2.2 èƒ½äº§ç”ŸæŒ‰é”®ç±»äº‹ä»¶ä¸­çš„å“ªç§äº‹ä»¶ï¼Œç”¨å››ä¸ªæŒ‰é”®æ¥äº§ç”ŸL,S,ENTER,LEFTSHIFT */
 	set_bit(KEY_L, buttons_dev->keybit); 
 	set_bit(KEY_S, buttons_dev->keybit); 
 	set_bit(KEY_ENTER, buttons_dev->keybit); 
 	set_bit(KEY_LEFTSHIFT, buttons_dev->keybit); 
 	
-	/* 1.3×¢²áinput_dev */
+	/* 1.3 æ³¨å†Œinput_dev */
 	input_register_device(buttons_dev);
 
-	/* 1.4Ó²¼şÏà¹ØµÄ²Ù×÷ */	
-	/* 1.4.1 ×¢²áÖĞ¶Ï */
+	/* 1.4 ç¡¬ä»¶ç›¸å…³æ“ä½œ */	
+	/* 1.4.1 æ³¨å†Œä¸­æ–­*/
 	int i;
 	for(i = 0; i < 4; i++)
 	{
 		request_irq(pins_desc[i].irq, button_irq, IRQT_BOTHEDGE, pins_desc[i].name, &pins_desc[i]);
 	}
 
-	/* 1.4.2Ê¹ÓÃ¶¨Ê±Æ÷ */
+	/* 1.4.2 ä½¿ç”¨å®šæ—¶å™¨ */
 
-	/* 1.4.2.1³õÊ¼»¯¶¨Ê±Æ÷ */
+	/* 1.4.2.1 åˆå§‹åŒ–å®šæ—¶å™¨*/
 	init_timer(&buttons_timer);
 
-	/* 1.4.2.2¶¨Ê±Æ÷´¦Àíº¯Êı */
+	/* 1.4.2.2å®šæ—¶å™¨å¤„ç†å‡½æ•° */
 	buttons_timer.function = buttons_timer_funtion;
 	
-	/* 1.4.2.3Ìí¼Ó¶¨Ê±Æ÷*/
+	/* 1.4.2.3æ·»åŠ å®šæ—¶å™¨ */
 	add_timer(&buttons_timer);
 
 	
 	return 0;
 }
 
-/* 2. ÔÙĞ´³ö¿Úº¯Êı */
+/* 2. å‡ºå£å‡½æ•° */
 static void buttons_exit(void)
 {
 	int i ;
-	/*Çå³ıÖĞ¶Ï*/
+	/* æ¸…ä¸­æ–­ */
 	for(i = 0; i < 4; i++)
 	{
 		free_irq(pins_desc[i].irq, &pins_desc[i]);
 	}
 
-	/*Çå³ı¶¨Ê±Æ÷*/
+	/* æ¸…é™¤å®šæ—¶å™¨ */
 	del_timer(&buttons_timer);
 
-	/*Ğ¶ÔØinput_dev½á¹¹*/
+	/* å¸è½½input_devç»“æ„ä½“ */
 	input_unregister_device(buttons_dev);
 
-	/*ÊÍ·Åinput_dev½á¹¹¿Õ¼ä*/
+	/* é‡Šæ”¾input_dev ç©ºé—´ */
 	input_free_device(buttons_dev);	
 }
 
-/* 3.ĞŞÊÎÈë¿ÚºÍ³ö¿Úº¯Êı */
+/* 3.ä¿®é¥°å…¥å£å‡½æ•°å’Œå‡ºå£å‡½æ•° */
 module_init(buttons_init);
 module_exit(buttons_exit);
 

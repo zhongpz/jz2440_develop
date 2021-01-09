@@ -18,63 +18,64 @@
 
 
 
-/*¶¨Òå×ÊÔ´*/
+/*å®šä¹‰èµ„æº*/
 static struct resource led_resource[] = {
     [0] = {
-        .start = 0x56000050,         //ÆğÊ¼ÎïÀíµØÖ·         
-        .end   = 0x56000050 + 8 - 1,  //½áÊøÎïÀíµØÖ·
-        .flags = IORESOURCE_MEM,        //ÀàĞÍ:ÄÚ´æ
+        .start = 0x56000050,         //èµ·å§‹ç‰©ç†åœ°å€         
+        .end   = 0x56000050 + 8 - 1,  //ç»“æŸç‰©ç†åœ°å€
+        .flags = IORESOURCE_MEM,        //ç±»å‹:å†…å­˜
     },
     [1] = {
-        .start = 4,  //µÚÒ»¸öLEDµÄÒı½ÅÎª4£¬Òª»»µÚ¶ş¸öLED¾Í»»³É5
+        .start = 4,  //ç¬¬ä¸€ä¸ªLEDçš„å¼•è„šä¸º4ï¼Œè¦æ¢ç¬¬äºŒä¸ªLEDå°±æ¢æˆ5
         .end   = 4,
-        .flags = IORESOURCE_IRQ,     //ÀàĞÍ:ÖĞ¶Ï
+        .flags = IORESOURCE_IRQ,     //ç±»å‹:ä¸­æ–­
     },
     [2] = {
-        .start = 5,  //µÚ1¸öÖĞ¶ÏÀàĞÍ×ÊÔ´£¬ÉÏÒ»¸öÎªµÚ0¸ö¡£
+        .start = 5,  //ç¬¬1ä¸ªä¸­æ–­ç±»å‹èµ„æºï¼Œä¸Šä¸€ä¸ªä¸ºç¬¬0ä¸ªã€‚
         .end   = 5,
-        .flags = IORESOURCE_IRQ,     //ÀàĞÍ:ÖĞ¶Ï
+        .flags = IORESOURCE_IRQ,     //ç±»å‹:ä¸­æ–­
     },
 };
 
-/*¶¨Òåreleaseº¯Êı*/
+/*å®šä¹‰releaseå‡½æ•°*/
 void led_release(struct device *dev)
 {
 
 }
 
 
-/*1.¶¨ÒåÆ½Ì¨Éè±¸platform_device½á¹¹Ìå*/
+/*1.å®šä¹‰å¹³å°è®¾å¤‡platform_deviceç»“æ„ä½“*/
 static struct platform_device led_dev = {
-    .name           = "myled",                      //Ãû×Ö
+    .name           = "myled",                      //åå­—
     .id             = -1,
-    .num_resources  = ARRAY_SIZE(led_resource),    //×ÊÔ´´óĞ¡
-    .resource       = led_resource,                //×ÊÔ´
+    .num_resources  = ARRAY_SIZE(led_resource),    //èµ„æºå¤§å°
+    .resource       = led_resource,                //èµ„æº
     .dev            ={
 		.release    = led_release,
 		},
 };
 
-/*2.Èë¿ÚĞĞÊı*/
+/*2.å…¥å£è¡Œæ•°*/
 static int led_dev_init(void)
 {
-	/*2.1×¢²áÒ»¸öÆ½Ì¨Éè±¸*/
+	/*2.1æ³¨å†Œä¸€ä¸ªå¹³å°è®¾å¤‡*/
 	platform_device_register(&led_dev);
 	return 0;
 }
 
-/*3.³ö¿Úº¯Êı*/
+/*3.å‡ºå£å‡½æ•°*/
 static void led_dev_exit(void)
 {
 	platform_device_unregister(&led_dev);
 }
 
 
-/*4.ĞŞÊÎ*/
+/*4.ä¿®é¥°*/
 module_init(led_dev_init);
 module_exit(led_dev_exit);
 
 MODULE_LICENSE("GPL");
+
 
 
 

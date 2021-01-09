@@ -25,7 +25,7 @@
 #include <asm/hardware.h>
 
 
-static int major;  //¶¨ÒåÖ÷Éè±¸ºÅ
+static int major;  //å®šä¹‰ä¸»è®¾å¤‡å·
 
 static struct class *led_class;  
 static struct class_device	*led_class_dev;
@@ -36,7 +36,7 @@ static int pin;
 
 static int led_drv_open(struct inode *inode, struct file *file)
 {
-	/*ÅäÖÃÊä³öÒı½Å*/
+	/*é…ç½®è¾“å‡ºå¼•è„š*/
 	*gpio_con &= ~(0x3 << (2*pin));
 	*gpio_con |= (0x1 << (2*pin));
 	return 0;
@@ -48,38 +48,38 @@ static ssize_t led_drv_write(struct file *file, const char __user *buf, size_t c
 	copy_from_user(&val, buf, count);
 	if(val == 1)
 	{
-		/* ¿ª */
+		/* å¼€ */
 		*gpio_dat &= ~(0x1 << pin);
 	}
 	else
 	{
-		/* ¹Ø */
+		/* å…³ */
 		*gpio_dat |=  (0x1 << pin);
 	}
 	
 	return 0;
 }
 
-/*¶¨Òåfile_operation½á¹¹*/
+/*å®šä¹‰file_operationç»“æ„*/
 static struct file_operations led_fops = {
 	.owner = THIS_MODULE,
 	.open  = led_drv_open,     
 	.write = led_drv_write,	
 };
 
-/*probeº¯Êı*/
+/*probeå‡½æ•°*/
 static int led_probe(struct platform_device *pdev)
 {
-	/*¸ù¾İÆ½Ì¨Éè±¸µÄ×ÊÔ´½øĞĞioremap*/
+	/*æ ¹æ®å¹³å°è®¾å¤‡çš„èµ„æºè¿›è¡Œioremap*/
 	struct resource *res;
 	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	gpio_con = ioremap(res->start, res->end - res->start + 1);
 	gpio_dat = gpio_con + 1;
 
-	res = platform_get_resource(pdev, IORESOURCE_IRQ, 1);   // 1±íÊ¾µÚÒ»¸öIORESOURCE_IRQ×ÊÔ´
+	res = platform_get_resource(pdev, IORESOURCE_IRQ, 1);   // 1è¡¨ç¤ºç¬¬ä¸€ä¸ªIORESOURCE_IRQèµ„æº
 	pin = res->start;
 	
-	/*×¢²á×Ö·ûÉè±¸Çı¶¯³ÌĞò*/
+	/*æ³¨å†Œå­—ç¬¦è®¾å¤‡é©±åŠ¨ç¨‹åº*/
 	major = register_chrdev(0, "myled", &led_fops);
 	led_class = (struct class *)class_create(THIS_MODULE, "led_drv");
 	led_class_dev = (struct class_device *)class_device_create(led_class, NULL, MKDEV(major, 0), NULL, "led");
@@ -89,13 +89,13 @@ static int led_probe(struct platform_device *pdev)
 	
 }
 
-/*removeº¯Êı*/
+/*removeå‡½æ•°*/
 static int  led_remove(struct platform_device *pdev)
 {
-	/*¸ù¾İÆ½Ì¨Éè±¸×ÊÔ´½øĞĞiounmap*/
+	/* æ ¹æ®èµ„æºè¿›è¡Œiounmap */
+	iounmap(gpio_con);
 	
-	
-	/*Ğ¶ÔØÇı¶¯*/
+	/* å¸è½½é©±åŠ¨ */
 	unregister_chrdev(major, "myled");
 	class_destroy(led_class);
 	class_device_unregister(led_class_dev);
@@ -105,33 +105,33 @@ static int  led_remove(struct platform_device *pdev)
 	return 0;
 }
 
-/*1.¶¨ÒåÒ»¸öÆ½Ì¨Çı¶¯platform_driver½á¹¹Ìå*/
+/*1.å®šä¹‰ä¸€ä¸ªå¹³å°é©±åŠ¨platform_driverç»“æ„ä½“*/
 struct platform_driver led_drv = {
 	.probe		= led_probe,
 	.remove		= led_remove,
 	.driver		= {
-		.name	= "myled",  //Ãû×ÖÒªÓëÆ½Ì¨Éè±¸½á¹¹ÌåÖĞµÄÃû×ÖÒ»ÖÂ
+		.name	= "myled",  //åå­—è¦ä¸å¹³å°è®¾å¤‡ç»“æ„ä½“ä¸­çš„åå­—ä¸€æ ·
 	}
 };
 
 
-/*2.Èë¿Úº¯Êı*/
+/* 2.å…¥å£å‡½æ•° */
 static int led_drv_init(void)
 {
-	/*2.1×¢²áplatform_driver½á¹¹Ìå*/
+	/*2.1æ³¨å†Œå¹³å°ç»“æ„ä½“*/
 	platform_driver_register(&led_drv);
 	return 0;
 }
 
 
-/*3.³ö¿Úº¯Êı*/
+/*3.å‡ºå£å‡½æ•°*/
 static void led_drv_exit(void)
 {
 	platform_driver_unregister(&led_drv);
 }
 
 
-/*4.ĞŞÊÎ*/
+/*4.ä¿®é¥°*/
 module_init(led_drv_init);
 module_exit(led_drv_exit);
 
