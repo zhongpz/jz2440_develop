@@ -54,7 +54,7 @@ int main(int argc, char **argv)
 	tSocketServerAddr.sin_port        = htons(SERVER_PORT); //端口，host to net 主机字节序转为网络字节序
 	memset(tSocketServerAddr.sin_zero, 0, 8);     //清0
 
-	/*把socket句柄iSocketServer绑和ip、端口绑定，成功返回0，失败返回-1
+	/*把socket句柄iSocketServer和ip、端口绑定，成功返回0，失败返回-1
 	 *使socket网络通讯的文件描述符iSocketServer监听tSocketServerAddr所描述的地址和端口号
 	 */
 	iRet = bind(iSocketServer, (struct sockaddr *)&tSocketServerAddr, sizeof(struct sockaddr));
