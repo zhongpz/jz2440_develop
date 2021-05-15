@@ -1,4 +1,5 @@
-
+#include <pthread.h>
+#include <semaphore.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -24,6 +25,7 @@
 #define BLACK 0x000000
 #define WHITE 0xffffff
 #define PI    3.1415926
+
 
 /* lcd信息 */
 typedef struct lcd_info{
@@ -62,6 +64,19 @@ typedef struct mytime{
 	int min;
 	int sec;
 }MYTIME, *pMYTIME;
+
+
+typedef struct hand_coor{
+	int x_h;
+	int y_h;
+	int x_m;
+	int y_m;
+	int x_s;
+	int y_s;
+}HAND_COOR, pHAND_COOR;
+
+HAND_COOR old_coor = {0,0,0,0,0,0};
+
 
 /*************************************************************
 LCD初始化函数
@@ -219,19 +234,6 @@ static void linebrush_h(int x, int y, unsigned short width, unsigned int color, 
 
 
 /*************************************************************
-垂直线刷子
-***************************************************************/
-static void linebrush_v(int x, int y, unsigned short width, unsigned int color, pLCD_INFO lcd_info)
-{
-	int i;
-	for(i = 0; i < width; i++)
-	{
-		put_pixel(lcd_info->xres/2 + x, lcd_info->yres/2 - (y + i), color, lcd_info);
-		put_pixel(lcd_info->xres/2 + x, lcd_info->yres/2 - (y - i), color, lcd_info);
-	}
-}
-
-/*************************************************************
 方格线刷子
 ***************************************************************/
 static void linebrush_s(int x, int y, unsigned short width, unsigned int color, pLCD_INFO lcd_info)
@@ -240,15 +242,12 @@ static void linebrush_s(int x, int y, unsigned short width, unsigned int color, 
 }
 
 /*************************************************************
-画线函数
+画线函数，不变宽度
 ***************************************************************/
-static void draw_line(int start_x, int start_y, int end_x, int end_y,
-	unsigned short width, unsigned int color, pLCD_INFO lcd_info)
+static void draw_line_fixwidth(int start_x, int start_y, int end_x, int end_y,
+	 unsigned int color, pLCD_INFO lcd_info)
 {
 	/* Bresenham算法 */
-
-	if(width < 1)  //默认宽度
-		width =1;
 	
     int x, y, delta_x, delta_y, d, i;
     int min_x, max_x, min_y, max_y;
@@ -273,7 +272,8 @@ static void draw_line(int start_x, int start_y, int end_x, int end_y,
         }
 		//linebrush_v(x, y, width, color, lcd_info);
 		//fill_rectangle(x, y, x + width - 1, y + width - 1, color, lcd_info);
-		linebrush_s(x, y, width, color, lcd_info);
+		//linebrush_s(x, y, width, color, lcd_info);
+		put_pixel(lcd_info->xres/2 + x, lcd_info->yres/2 - y, color, lcd_info);
 
 		d = 2 * abs(delta_y) - abs(delta_x);   /* 初始判别式 */
 
@@ -295,7 +295,8 @@ static void draw_line(int start_x, int start_y, int end_x, int end_y,
             }
 			//linebrush_v(x, y, width, color, lcd_info);
 			//fill_rectangle(x, y, x + width - 1, y + width - 1, color, lcd_info);
-			linebrush_s(x, y, width, color, lcd_info);
+			//linebrush_s(x, y, width, color, lcd_info);
+			put_pixel(lcd_info->xres/2 + x, lcd_info->yres/2 - y, color, lcd_info);
 		}
     }
     else   /* 斜率大于1 */
@@ -317,7 +318,8 @@ static void draw_line(int start_x, int start_y, int end_x, int end_y,
 
 		//linebrush_h(x, y, width, color, lcd_info);
 		//fill_rectangle(x, y, x + width - 1, y + width - 1, color, lcd_info);
-		linebrush_s(x, y, width, color, lcd_info);
+		//linebrush_s(x, y, width, color, lcd_info);
+		put_pixel(lcd_info->xres/2 + x, lcd_info->yres/2 - y, color, lcd_info);
 		d = 2 * abs(delta_x) - abs(delta_y); 
 
 		for(i = min_y; i < max_y; i++)
@@ -337,7 +339,148 @@ static void draw_line(int start_x, int start_y, int end_x, int end_y,
             }
 			//linebrush_h(x, y, width, color, lcd_info);
 			//fill_rectangle(x, y, x + width - 1, y + width - 1, color, lcd_info);
-			linebrush_s(x, y, width, color, lcd_info);
+			//linebrush_s(x, y, width, color, lcd_info);
+			put_pixel(lcd_info->xres/2 + x, lcd_info->yres/2 - y, color, lcd_info);
+		}
+    }
+}
+
+ /*************************************************************
+ 垂直线刷子
+ ***************************************************************/
+ static void linebrush_v(int a, int b, unsigned short  width, double k, unsigned int color, pLCD_INFO lcd_info)
+ {
+ //  int i;
+ //  for(i = 0; i < width; i++)
+ //  {
+ // 	 put_pixel(lcd_info->xres/2 + x, lcd_info->yres/2 - (y + i), color, lcd_info);
+ // 	 put_pixel(lcd_info->xres/2 + x, lcd_info->yres/2 - (y - i), color, lcd_info);
+ //  }
+	 
+	 /*
+	  * 已知一点（a,b）
+	  * 已知斜率 -1/k
+	  * 那么直线方程为 y-b = (-1/k)*(x-a)
+	  */
+ 
+	 /* 线刷子的起点和终点 */
+	 int start_x = a + width;
+ 	 int start_y = (int)((-1/k)*(start_x-a)+b);
+ 	 int end_x	 = a - width;
+ 	 int end_y	 = (int)((-1/k)*(start_x-a)+b);
+ 
+	 draw_line_fixwidth(start_x, start_y, end_x, end_y, color, lcd_info);
+ }
+
+
+/*************************************************************
+画线函数,可变宽度
+***************************************************************/
+static void draw_line_varwidth(int start_x, int start_y, int end_x, int end_y,
+	unsigned short width, unsigned int color, pLCD_INFO lcd_info)
+{
+	/* Bresenham算法 */
+
+	if(width < 1)  //默认宽度
+		width =1;
+	
+    int x, y, delta_x, delta_y, d, i;
+    int min_x, max_x, min_y, max_y;
+    delta_x = end_x - start_x;
+    delta_y = end_y - start_y;
+	double k = delta_y / delta_x;
+	
+    if(abs(delta_x) > abs(delta_y))  /* 斜率绝对值在（0,1），步进方向为x轴 */
+    {
+        /* 默认画点从左往右 */
+        if(start_x < end_x)
+        {
+            x = start_x;
+            y = start_y;
+            min_x = start_x;
+            max_x = end_x;
+        }
+        else
+        {
+            x = end_x;
+            y = end_y;     
+            min_x = end_x;
+            max_x = start_x;
+        }
+		//linebrush_v(x, y, width, color, lcd_info);
+		//fill_rectangle(x, y, x + width - 1, y + width - 1, color, lcd_info);
+		//linebrush_s(x, y, width, color, lcd_info);
+		//linebrush_v(x, y, width, k, color, lcd_info);
+		put_pixel(lcd_info->xres/2 + x, lcd_info->yres/2 - y, color, lcd_info);
+		d = 2 * abs(delta_y) - abs(delta_x);   /* 初始判别式 */
+
+		/* 步进判断x,y坐标点 */
+        for(i = min_x; i < max_x; i++)
+        {
+            x++;
+            if(d >= 0)
+            {
+                if (delta_x * delta_y >= 0)
+					y += 1;
+				else
+					y -= 1;                        //若d>=0,y(i+1)=y(i)±1
+				d += 2 * (abs(delta_y) - abs(delta_x));    //更新d
+            }
+            else
+            {
+                d += 2 * abs(delta_y);
+            }
+			//linebrush_v(x, y, width, color, lcd_info);
+			//fill_rectangle(x, y, x + width - 1, y + width - 1, color, lcd_info);
+			//linebrush_s(x, y, width, color, lcd_info);
+			//linebrush_v(x, y, width, k, color, lcd_info);
+			put_pixel(lcd_info->xres/2 + x, lcd_info->yres/2 - y, color, lcd_info);
+		}
+    }
+    else   /* 斜率大于1 */
+    {
+        if (start_y < end_y) 
+		{                     //步进方向为y轴，默认画点从下往上画          
+			x = start_x;
+			y = start_y;
+            min_y = start_y;
+            max_y = end_y;
+		}
+		else 
+		{
+			x = end_x;
+			y = end_y;
+            min_y = end_y;
+            max_y = start_y;
+		}
+
+		//linebrush_h(x, y, width, color, lcd_info);
+		//fill_rectangle(x, y, x + width - 1, y + width - 1, color, lcd_info);
+		//linebrush_s(x, y, width, color, lcd_info);
+		//linebrush_v(x, y, width, color, k, lcd_info);
+		put_pixel(lcd_info->xres/2 + x, lcd_info->yres/2 - y, color, lcd_info);
+		d = 2 * abs(delta_x) - abs(delta_y); 
+
+		for(i = min_y; i < max_y; i++)
+        {
+            y++;
+            if(d >= 0)
+            {
+                if(delta_x * delta_y >= 0)
+                    x += 1; 
+                else
+                    x -= 1;
+                d += 2 * (abs(delta_x) - abs(delta_y));
+            }
+            else
+            {
+                d += 2 * abs(delta_x);
+            }
+			//linebrush_h(x, y, width, color, lcd_info);
+			//fill_rectangle(x, y, x + width - 1, y + width - 1, color, lcd_info);
+			//linebrush_s(x, y, width, color, lcd_info);
+			//linebrush_v(x, y, width, color, k, lcd_info);
+			put_pixel(lcd_info->xres/2 + x, lcd_info->yres/2 - y, color, lcd_info);
 		}
     }
 }
@@ -417,6 +560,7 @@ static void draw_dial(unsigned short r, pLCD_INFO lcd_info)
 			put_pixel(lcd_info->xres/2+x, lcd_info->yres/2-y, GREEN, lcd_info);
 	}
 }
+
 
 
 /************************************************************
@@ -521,14 +665,23 @@ static void draw_hand(int hour, int minute, int second, pLCD_INFO lcd_info)
 	/* 时分秒指针末端坐标 */
 	int x_h, y_h, x_m, y_m, x_s, y_s;
 
+	/* 新旧坐标的起始坐标 */
+	int x_h_new, y_h_new, x_m_new, y_m_new, x_s_new, y_s_new;
+	int x_h_old, y_h_old, x_m_old, y_m_old, x_s_old, y_s_old;
+
 	/* 计算弧度：
 	 * 秒针一秒钟旋转：2π / 60 弧度
 	 * 分针一秒钟旋转：2π / 60 / 60  弧度
 	 * 时针一秒钟旋转：2π / 12 / 3600  弧度
 	 */ 
-	s_radian = (2 * PI * second / 60 + PI / 2);
-	m_radian = (2 * PI * minute / 60 + 2 * PI * second / 3600 + PI / 2);
-	h_radian = (2 * PI * hour / 12 + 2 * PI * (minute * 60  + second) / 3600 / 12 + PI / 2);
+//	s_radian = (2 * PI * second / 60 + PI / 2);
+//	m_radian = (2 * PI * minute / 60 + 2 * PI * second / 3600 + PI / 2);
+//	h_radian = (2 * PI * hour / 12 + 2 * PI * (minute * 60  + second) / 3600 / 12 + PI / 2);
+
+	/* 上式化简 */
+	s_radian = (second+15)*PI/30;
+	m_radian = (60*minute+second+900)*PI/1800;
+	h_radian = (3600*hour+60*minute+second+10800)*PI/21600;
 
 	/* 计算指针的末端坐标 */
 	x_s = (int)(85 * cos(s_radian));
@@ -537,20 +690,68 @@ static void draw_hand(int hour, int minute, int second, pLCD_INFO lcd_info)
 	y_m = (int)(70 * sin(m_radian));
 	x_h = (int)(53 * cos(h_radian));	
 	y_h = (int)(53 * sin(h_radian));
-	
-	/* 绘制指针，通过原点对称，确定起始点 */
-	draw_line((int)(0.2 * x_h), (int)(0.2 * -y_h), -x_h, y_h, 4, RED, lcd_info);
-	draw_line((int)(0.26 * x_m), (int)(0.26 * -y_m), -x_m, y_m, 3, BLUE, lcd_info);
-	draw_line((int)(0.32 * x_s), (int)(0.32 * -y_s), -x_s, y_s, 2, GREEN, lcd_info);
-	draw_circel(0, 0, 1, 5, WHITE, lcd_info);  //表盘中心
 
+
+	/* 计算新/旧坐标的起始坐标 */
+	x_h_new = (int)(0.2 * x_h);
+	y_h_new = (int)(0.2 * -y_h);
+	x_m_new = (int)(0.26 * x_m);
+	y_m_new = (int)(0.26 * -y_m);
+	x_s_new = (int)(0.32 * x_s);
+	y_s_new = (int)(0.32 * -y_s);
+
+	x_h_old = (int)(0.2 * old_coor.x_h); 
+	y_h_old = (int)(0.2 * -old_coor.y_h);
+	x_m_old = (int)(0.26 * old_coor.x_m); 
+	y_m_old = (int)(0.26 * -old_coor.y_m); 
+	x_s_old = (int)(0.32 * old_coor.x_s); 
+	y_s_old = (int)(0.32 * -old_coor.y_s);
+	
+
+
+	if((old_coor.x_h == 0) && (old_coor.y_h == 0)) /* 第一次绘制 */
+	{
+		/* 绘制指针，通过原点对称，确定起始点 */
+		draw_line_varwidth(x_h_new, y_h_new, -x_h, y_h, 4, RED, lcd_info);
+		draw_line_varwidth(x_m_new, y_m_new, -x_m, y_m, 3, BLUE, lcd_info);
+		draw_line_varwidth(x_s_new, y_s_new, -x_s, y_s, 2, GREEN, lcd_info);
+		draw_circel(0, 0, 1, 5, WHITE, lcd_info);  //表盘中心
+
+		old_coor.x_h = x_h;
+		old_coor.y_h = y_h;
+		old_coor.x_m = x_m;
+		old_coor.y_m = y_m;
+		old_coor.x_s = x_s;
+		old_coor.y_s = y_s;
+	}
+	else   /* 非第一次，先清除上一次，再绘制新的 */
+	{
+		/* 把表针设置成背景色，起到清除作用 */
+		draw_line_varwidth(x_h_old, y_h_old, -(old_coor.x_h), old_coor.y_h, 4, BLACK, lcd_info);
+		draw_line_varwidth(x_m_old, y_m_old, -(old_coor.x_m), old_coor.y_m, 3, BLACK, lcd_info);
+		draw_line_varwidth(x_s_old, y_s_old, -(old_coor.x_s), old_coor.y_s, 2, BLACK, lcd_info);
+
+		/* 绘制指针，通过原点对称，确定起始点 */
+		draw_line_varwidth(x_h_new, y_h_new, -x_h, y_h, 4, RED, lcd_info);
+		draw_line_varwidth(x_m_new, y_m_new, -x_m, y_m, 3, BLUE, lcd_info);
+		draw_line_varwidth(x_s_new, y_s_new, -x_s, y_s, 2, GREEN, lcd_info);
+		draw_circel(0, 0, 1, 5, WHITE, lcd_info);  //表盘中心
+
+		
+		old_coor.x_h = x_h;
+		old_coor.y_h = y_h;
+		old_coor.x_m = x_m;
+		old_coor.y_m = y_m;
+		old_coor.x_s = x_s;
+		old_coor.y_s = y_s;
+	}
+	
 	sleep(1);
 
-	/* 把表针设置成背景色，起到清除作用 */
-	draw_line((int)(0.2 * x_h), (int)(0.2 * -y_h), -x_h, y_h, 4, BLACK, lcd_info);
-	draw_line((int)(0.26 * x_m), (int)(0.26 * -y_m), -x_m, y_m, 3, BLACK, lcd_info);
-	draw_line((int)(0.32 * x_s), (int)(0.32 * -y_s), -x_s, y_s, 2, BLACK, lcd_info);
-
+//	/* 把表针设置成背景色，起到清除作用 */
+//	draw_line((int)(0.2 * x_h), (int)(0.2 * -y_h), -x_h, y_h, 4, BLACK, lcd_info);
+//	draw_line((int)(0.26 * x_m), (int)(0.26 * -y_m), -x_m, y_m, 3, BLACK, lcd_info);
+//	draw_line((int)(0.32 * x_s), (int)(0.32 * -y_s), -x_s, y_s, 2, BLACK, lcd_info);
 }
 
 /************************************************************
@@ -573,21 +774,20 @@ static void get_time(pMYTIME t)
 }
 
 
-
 int main(int argc, char **argv)
 {
 	LCD_INFO tLcd_Info;
-	MYTIME   timeforclock;
+	MYTIME timeforclock ;
 	lcd_init(&tLcd_Info);
 	draw_circel(0, 0, 120, 2, GREEN, &tLcd_Info);
 	draw_dial(113, &tLcd_Info);
 	clock_text(100, &tLcd_Info);
-	
+
 	while(1)
 	{
-		get_time(&timeforclock);	
+		get_time(&timeforclock);
 		draw_circel(0, 0, 35, 2, GREEN, &tLcd_Info);
-		draw_hand(timeforclock.hour, timeforclock.min, timeforclock.sec, &tLcd_Info);
+		draw_hand(timeforclock.hour, timeforclock.min, timeforclock.sec, &tLcd_Info);	
 	}
 
 	lcd_del(&tLcd_Info);
